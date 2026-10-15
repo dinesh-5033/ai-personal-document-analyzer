@@ -15,6 +15,7 @@ export default function App() {
   const [aiResult, setAiResult] = useState("");
   const [aiMode, setAiMode] = useState("");
   const [question, setQuestion] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
 
   const [compareFile, setCompareFile] = useState(null);
 
@@ -133,9 +134,22 @@ export default function App() {
         }
       );
 
-      setAiResult(
-        result[action.field] || "The AI returned no result."
-      );
+      
+const responseText =
+  result[action.field] || "The AI returned no result.";
+
+setAiResult(responseText);
+
+if (action.field === "answer") {
+  setChatHistory((previous) => [
+    ...previous,
+    {
+      question,
+      answer: responseText,
+    },
+  ]);
+}
+
     } catch (err) {
       setAiError(
         err.message || "The AI request failed. Please try again."
@@ -402,22 +416,80 @@ export default function App() {
                   {aiMode === "chat" && "AI answer"}
                   {aiMode === "compare" && "Document comparison"}
                 </h4>
-                <pre className="document-text">{aiResult}</pre>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAiResult("");
-                    setAiError("");
-                    setAiMode("");
-                  }}
-                >
-                  Clear result
-                </button>
+               
+<pre className="document-text">{aiResult}</pre>
+<div className="result-actions">
+  <button
+    type="button"
+    onClick={() => {
+      const blob = new Blob([aiResult], {
+        type: "text/plain;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = window.document.createElement("a");
+      const filename =
+        {
+          summarize: "document-summary.txt",
+          extract: "extracted-information.txt",
+          chat: "ai-answer.txt",
+          compare: "document-comparison.txt",
+        }[aiMode] || "ai-result.txt";
+
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }}
+  >
+    Download Result (.txt)
+  </button>
+
+  <button
+    type="button"
+    onClick={() => {
+      setAiResult("");
+      setAiError("");
+      setAiMode("");
+    }}
+  >
+    Clear result
+  </button>
+</div>
+
               </section>
             )}
           </section>
         </>
       )}
+      
+{chatHistory.length > 0 && (
+  <section className="ai-result">
+    <h4>Chat History</h4>
+
+    {chatHistory.map((chat, index) => (
+      <div key={index} className="chat-history-item">
+        <p>
+          <strong>Question {index + 1}:</strong>{" "}
+          {chat.question}
+        </p>
+
+        <p>
+          <strong>AI Answer:</strong>
+        </p>
+
+        <pre className="document-text">{chat.answer}</pre>
+      </div>
+    ))}
+
+    <button
+      type="button"
+      onClick={() => setChatHistory([])}
+    >
+      Clear Chat History
+    </button>
+  </section>
+)}
+
 
       <footer>
         AI Personal Document Analyzer · Local development
