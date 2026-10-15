@@ -23,9 +23,19 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
+allowed_origins = ["http://localhost:5173"]
+
+frontend_url = os.getenv("FRONTEND_URL", "")
+allowed_origins.extend(
+    origin.strip().rstrip("/")
+    for origin in frontend_url.split(",")
+    if origin.strip()
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
